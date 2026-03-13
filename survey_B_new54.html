@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google" content="notranslate">
+<meta http-equiv="Content-Language" content="en">
+<title>Word Perception Study</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #333; }
+  .container { max-width: 720px; margin: 0 auto; padding: 20px; }
+  .screen { display: none; min-height: 80vh; }
+  .screen.active { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+  /* Consent & Instructions */
+  .info-box { background: #fff; border-radius: 12px; padding: 40px; box-shadow: 0 2px 12px rgba(0,0,0,.08); max-width: 640px; width: 100%; }
+  .info-box h1 { font-size: 22px; margin-bottom: 16px; color: #1a1a2e; }
+  .info-box h2 { font-size: 18px; margin: 20px 0 10px; color: #16213e; }
+  .info-box p, .info-box li { font-size: 15px; line-height: 1.7; margin-bottom: 8px; color: #444; }
+  .info-box ul { padding-left: 20px; }
+
+  .btn { display: inline-block; padding: 12px 32px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .btn-primary { background: #4361ee; color: #fff; }
+  .btn-primary:hover { background: #3a56d4; transform: translateY(-1px); }
+  .btn-secondary { background: #e8ecf1; color: #555; }
+  .btn-secondary:hover { background: #dde1e8; }
+  .btn-group { margin-top: 24px; display: flex; gap: 12px; justify-content: center; }
+
+  /* Demographics */
+  .form-group { margin-bottom: 20px; text-align: left; width: 100%; }
+  .form-group label { font-weight: 600; font-size: 14px; display: block; margin-bottom: 6px; }
+  .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+  .form-group .radio-group { display: flex; gap: 16px; flex-wrap: wrap; }
+  .form-group .radio-group label { font-weight: 400; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+  /* Trial */
+  .trial-container { text-align: center; width: 100%; }
+  .trial-question { font-size: 22px; font-weight: 600; color: #1a1a2e; margin-bottom: 40px; }
+  .trial-progress { font-size: 13px; color: #888; margin-bottom: 20px; }
+  .word-pair { display: flex; gap: 40px; justify-content: center; align-items: center; }
+  .word-btn { min-width: 200px; padding: 28px 24px; font-size: 28px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 2px; background: #fff; border: 2px solid #ddd; border-radius: 12px; cursor: pointer; transition: all .15s; color: #1a1a2e; }
+  .word-btn:hover { border-color: #4361ee; background: #f0f4ff; transform: scale(1.03); }
+  .word-btn:active { transform: scale(0.98); }
+  .or-divider { font-size: 16px; color: #aaa; font-weight: 600; }
+
+  /* Progress bar */
+  .progress-bar { width: 100%; height: 4px; background: #e8ecf1; border-radius: 2px; margin-bottom: 20px; }
+  .progress-fill { height: 100%; background: #4361ee; border-radius: 2px; transition: width .3s; }
+
+  /* End screen */
+  .completion-code { font-size: 24px; font-weight: 700; background: #e8f5e9; padding: 16px 32px; border-radius: 8px; margin: 16px 0; letter-spacing: 1px; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .word-pair { flex-direction: column; gap: 16px; }
+    .word-btn { min-width: 160px; font-size: 22px; padding: 20px; }
+    .or-divider { display: none; }
+  }
+</style>
+</head>
+<body>
+<script>
+// Block access without Prolific parameters
+const urlParams = new URLSearchParams(window.location.search);
+if (!urlParams.get('PROLIFIC_PID')) {
+  document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;"><div style="text-align:center;padding:40px;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);"><h2>Access Restricted</h2><p style="color:#666;margin-top:12px;">Please access this study through Prolific.</p></div></div>';
+}
+</script>
+<div class="container">
+
+<!-- SCREEN 1: Consent -->
+<div class="screen active" id="screen-consent">
+  <div class="info-box">
+    <h1>Word Perception Study</h1>
+    
+    <h2>Purpose</h2>
+    <p>This study investigates how people associate the sounds of made-up words with certain qualities (e.g., size, weight, speed).</p>
+    <h2>What will I do?</h2>
+    <p>You will see pairs of made-up words and answer simple questions like "Which word feels bigger?" There are no right or wrong answers — we are interested in your intuitive responses.</p>
+    <ul>
+      <li>Duration: approximately 5–10 minutes</li>
+      <li>57 trials total (54 experimental + 3 attention checks)</li>
+    </ul>
+    <h2>Risks & Confidentiality</h2>
+    <p>This study involves minimal risk. Your responses are anonymous. No personally identifiable information is collected. Data may be shared on OSF upon publication.</p>
+    <h2>Voluntary Participation</h2>
+    <p>Participation is voluntary. You may withdraw at any time by closing this window.</p>
+    
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="showScreen('screen-demographics')">I Agree — Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2: Demographics -->
+<div class="screen" id="screen-demographics">
+  <div class="info-box">
+    <h1>About You</h1>
+    <div class="form-group">
+      <label>Age</label>
+      <input type="number" id="demo-age" min="18" max="99" placeholder="e.g., 25">
+    </div>
+    <div class="form-group">
+      <label>Gender</label>
+      <div class="radio-group">
+        <label><input type="radio" name="gender" value="male"> Male</label>
+        <label><input type="radio" name="gender" value="female"> Female</label>
+        <label><input type="radio" name="gender" value="nonbinary"> Non-binary</label>
+        <label><input type="radio" name="gender" value="prefer_not"> Prefer not to say</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Native Language (first language)</label>
+      <input type="text" id="demo-lang" placeholder="e.g., English">
+    </div>
+    <div class="form-group">
+      <label>Other languages spoken fluently</label>
+      <input type="text" id="demo-langs" placeholder="e.g., Spanish, French (or none)">
+    </div>
+    <div class="form-group">
+      <label>Do you have any reading disabilities?</label>
+      <div class="radio-group">
+        <label><input type="radio" name="reading" value="no"> No</label>
+        <label><input type="radio" name="reading" value="yes"> Yes</label>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startExperiment()">Begin Study</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3: Instructions -->
+<div class="screen" id="screen-instructions">
+  <div class="info-box" style="text-align:center;">
+    <h1>Instructions</h1>
+    <p style="font-size:17px; margin:20px 0;">On each trial, you will see a question and two made-up words.</p>
+    <p style="font-size:17px; margin:20px 0;"><strong>Click the word that best matches your gut feeling.</strong></p>
+    <p style="font-size:17px; margin:20px 0;">There are no right or wrong answers. Please respond quickly and naturally.</p>
+    <div style="margin:30px 0; padding:24px; background:#f8f9ff; border-radius:8px;">
+      <p style="font-size:16px; color:#888; margin-bottom:16px;">Example:</p>
+      <p style="font-size:18px; font-weight:600; margin-bottom:20px;">Which word feels bigger?</p>
+      <div style="display:flex; gap:24px; justify-content:center;">
+        <span style="padding:16px 24px; background:#fff; border:2px solid #ddd; border-radius:8px; font-family:monospace; font-size:22px; font-weight:700;">zompa</span>
+        <span style="padding:16px 24px; background:#fff; border:2px solid #ddd; border-radius:8px; font-family:monospace; font-size:22px; font-weight:700;">zimpi</span>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="showScreen('screen-trial'); showTrial();">Start</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 4: Trial -->
+<div class="screen" id="screen-trial">
+  <div class="trial-container">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="trial-progress" id="trial-progress"></div>
+    <div class="trial-question" id="trial-question"></div>
+    <div class="word-pair">
+      <button class="word-btn" id="word-left" onclick="respond('left')"></button>
+      <span class="or-divider">or</span>
+      <button class="word-btn" id="word-right" onclick="respond('right')"></button>
+    </div>
+    <button class="btn btn-secondary" id="back-btn" style="margin-top:28px;font-size:13px;padding:8px 20px;display:none;" onclick="goBack()">&#8592; Go Back</button>
+  </div>
+</div>
+
+<!-- SCREEN 5: End -->
+<div class="screen" id="screen-end">
+  <div class="info-box" style="text-align:center;">
+    <h1>Thank You!</h1>
+    <p style="font-size:17px; margin:20px 0;">Your responses have been recorded.</p>
+    <p style="margin:16px 0;">This study investigates sound symbolism — the idea that certain speech sounds are naturally associated with particular meanings or sensory qualities.</p>
+    <p style="margin:20px 0; font-weight:600;">Your Prolific completion code:</p>
+    <div class="completion-code" id="completion-code">XXXXXXXX</div>
+    
+    <div id="download-fallback" style="display:none; margin-top:16px; padding:16px; background:#fff3cd; border-radius:8px;">
+      <p style="color:#856404; font-size:14px; margin-bottom:10px;">Data could not be sent automatically. Please download and send to the researcher.</p>
+      <button class="btn btn-primary" onclick="downloadData()">Download Data</button>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-secondary" onclick="downloadData()" style="font-size:13px;">Download Data (researcher)</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ===== STIMULUS DATA =====
+const experimentalTrials = [
+{
+"item": 1,
+"dimension": "Size",
+"scale": "small - big",
+"question": "Which pseudoword feels bigger?",
+"word_a": "brib",
+"word_b": "brob",
+"predicted_word": "brob"
+},
+{
+"item": 2,
+"dimension": "Size",
+"scale": "small - big",
+"question": "Which pseudoword feels bigger?",
+"word_a": "brif",
+"word_b": "brof",
+"predicted_word": "brof"
+},
+{
+"item": 3,
+"dimension": "Size",
+"scale": "small - big",
+"question": "Which pseudoword feels bigger?",
+"word_a": "izmib",
+"word_b": "ozmob",
+"predicted_word": "ozmob"
+},
+{
+"item": 4,
+"dimension": "Size",
+"scale": "small - big",
+"question": "Which pseudoword feels bigger?",
+"word_a": "agland",
+"word_b": "iglind",
+"predicted_word": "agland"
+},
+{
+"item": 5,
+"dimension": "Size",
+"scale": "small - big",
+"question": "Which pseudoword feels bigger?",
+"word_a": "brarn",
+"word_b": "brirn",
+"predicted_word": "brarn"
+},
+{
+"item": 6,
+"dimension": "Size",
+"scale": "small - big",
+"question": "Which pseudoword feels bigger?",
+"word_a": "braf",
+"word_b": "brif",
+"predicted_word": "braf"
+},
+{
+"item": 7,
+"dimension": "Shape",
+"scale": "round - spiky",
+"question": "Which pseudoword feels spikier?",
+"word_a": "bioduf",
+"word_b": "bioxuf",
+"predicted_word": "bioxuf"
+},
+{
+"item": 8,
+"dimension": "Shape",
+"scale": "round - spiky",
+"question": "Which pseudoword feels spikier?",
+"word_a": "efvoda",
+"word_b": "efvoxa",
+"predicted_word": "efvoxa"
+},
+{
+"item": 9,
+"dimension": "Shape",
+"scale": "round - spiky",
+"question": "Which pseudoword feels spikier?",
+"word_a": "uobdud",
+"word_b": "uobxux",
+"predicted_word": "uobxux"
+},
+{
+"item": 10,
+"dimension": "Shape",
+"scale": "round - spiky",
+"question": "Which pseudoword feels spikier?",
+"word_a": "lidlau",
+"word_b": "xidxau",
+"predicted_word": "xidxau"
+},
+{
+"item": 11,
+"dimension": "Shape",
+"scale": "round - spiky",
+"question": "Which pseudoword feels spikier?",
+"word_a": "leidlu",
+"word_b": "xeidxu",
+"predicted_word": "xeidxu"
+},
+{
+"item": 12,
+"dimension": "Shape",
+"scale": "round - spiky",
+"question": "Which pseudoword feels spikier?",
+"word_a": "polgau",
+"word_b": "poxgau",
+"predicted_word": "poxgau"
+},
+{
+"item": 13,
+"dimension": "Brightness",
+"scale": "dark - bright",
+"question": "Which pseudoword feels brighter?",
+"word_a": "uguge",
+"word_b": "uyuye",
+"predicted_word": "uyuye"
+},
+{
+"item": 14,
+"dimension": "Brightness",
+"scale": "dark - bright",
+"question": "Which pseudoword feels brighter?",
+"word_a": "vigfag",
+"word_b": "viyfay",
+"predicted_word": "viyfay"
+},
+{
+"item": 15,
+"dimension": "Brightness",
+"scale": "dark - bright",
+"question": "Which pseudoword feels brighter?",
+"word_a": "oagog",
+"word_b": "oayoy",
+"predicted_word": "oayoy"
+},
+{
+"item": 16,
+"dimension": "Brightness",
+"scale": "dark - bright",
+"question": "Which pseudoword feels brighter?",
+"word_a": "dureod",
+"word_b": "yureoy",
+"predicted_word": "yureoy"
+},
+{
+"item": 17,
+"dimension": "Brightness",
+"scale": "dark - bright",
+"question": "Which pseudoword feels brighter?",
+"word_a": "bitdod",
+"word_b": "bityoy",
+"predicted_word": "bityoy"
+},
+{
+"item": 18,
+"dimension": "Brightness",
+"scale": "dark - bright",
+"question": "Which pseudoword feels brighter?",
+"word_a": "oduad",
+"word_b": "oyuay",
+"predicted_word": "oyuay"
+},
+{
+"item": 19,
+"dimension": "Texture",
+"scale": "smooth - rough",
+"question": "Which pseudoword feels rougher?",
+"word_a": "ohehof",
+"word_b": "oxexof",
+"predicted_word": "oxexof"
+},
+{
+"item": 20,
+"dimension": "Texture",
+"scale": "smooth - rough",
+"question": "Which pseudoword feels rougher?",
+"word_a": "uhamih",
+"word_b": "uxamix",
+"predicted_word": "uxamix"
+},
+{
+"item": 21,
+"dimension": "Texture",
+"scale": "smooth - rough",
+"question": "Which pseudoword feels rougher?",
+"word_a": "oeviah",
+"word_b": "oeviax",
+"predicted_word": "oeviax"
+},
+{
+"item": 22,
+"dimension": "Texture",
+"scale": "smooth - rough",
+"question": "Which pseudoword feels rougher?",
+"word_a": "almoel",
+"word_b": "aqmoeq",
+"predicted_word": "aqmoeq"
+},
+{
+"item": 23,
+"dimension": "Texture",
+"scale": "smooth - rough",
+"question": "Which pseudoword feels rougher?",
+"word_a": "leovul",
+"word_b": "qeovuq",
+"predicted_word": "qeovuq"
+},
+{
+"item": 24,
+"dimension": "Texture",
+"scale": "smooth - rough",
+"question": "Which pseudoword feels rougher?",
+"word_a": "zaliol",
+"word_b": "zaqioq",
+"predicted_word": "zaqioq"
+},
+{
+"item": 25,
+"dimension": "Speed",
+"scale": "slow - fast",
+"question": "Which pseudoword feels faster?",
+"word_a": "brif",
+"word_b": "brof",
+"predicted_word": "brif"
+},
+{
+"item": 26,
+"dimension": "Speed",
+"scale": "slow - fast",
+"question": "Which pseudoword feels faster?",
+"word_a": "grirp",
+"word_b": "grorp",
+"predicted_word": "grirp"
+},
+{
+"item": 27,
+"dimension": "Speed",
+"scale": "slow - fast",
+"question": "Which pseudoword feels faster?",
+"word_a": "ibmi",
+"word_b": "obmo",
+"predicted_word": "ibmi"
+},
+{
+"item": 28,
+"dimension": "Speed",
+"scale": "slow - fast",
+"question": "Which pseudoword feels faster?",
+"word_a": "mismoe",
+"word_b": "ziszoe",
+"predicted_word": "ziszoe"
+},
+{
+"item": 29,
+"dimension": "Speed",
+"scale": "slow - fast",
+"question": "Which pseudoword feels faster?",
+"word_a": "mobupu",
+"word_b": "zobupu",
+"predicted_word": "zobupu"
+},
+{
+"item": 30,
+"dimension": "Speed",
+"scale": "slow - fast",
+"question": "Which pseudoword feels faster?",
+"word_a": "gimumi",
+"word_b": "gizuzi",
+"predicted_word": "gizuzi"
+},
+{
+"item": 31,
+"dimension": "Temperature",
+"scale": "cold - warm",
+"question": "Which pseudoword feels warmer?",
+"word_a": "joijo",
+"word_b": "noino",
+"predicted_word": "joijo"
+},
+{
+"item": 32,
+"dimension": "Temperature",
+"scale": "cold - warm",
+"question": "Which pseudoword feels warmer?",
+"word_a": "idjau",
+"word_b": "idnau",
+"predicted_word": "idjau"
+},
+{
+"item": 33,
+"dimension": "Temperature",
+"scale": "cold - warm",
+"question": "Which pseudoword feels warmer?",
+"word_a": "ajeojo",
+"word_b": "aneono",
+"predicted_word": "ajeojo"
+},
+{
+"item": 34,
+"dimension": "Temperature",
+"scale": "cold - warm",
+"question": "Which pseudoword feels warmer?",
+"word_a": "adva",
+"word_b": "idvi",
+"predicted_word": "adva"
+},
+{
+"item": 35,
+"dimension": "Temperature",
+"scale": "cold - warm",
+"question": "Which pseudoword feels warmer?",
+"word_a": "rasrad",
+"word_b": "risrid",
+"predicted_word": "rasrad"
+},
+{
+"item": 36,
+"dimension": "Temperature",
+"scale": "cold - warm",
+"question": "Which pseudoword feels warmer?",
+"word_a": "afap",
+"word_b": "ifip",
+"predicted_word": "afap"
+},
+{
+"item": 37,
+"dimension": "Pleasantness",
+"scale": "unpleasant - pleasant",
+"question": "Which pseudoword feels more pleasant?",
+"word_a": "almoel",
+"word_b": "aqmoeq",
+"predicted_word": "almoel"
+},
+{
+"item": 38,
+"dimension": "Pleasantness",
+"scale": "unpleasant - pleasant",
+"question": "Which pseudoword feels more pleasant?",
+"word_a": "zulele",
+"word_b": "zuqeqe",
+"predicted_word": "zulele"
+},
+{
+"item": 39,
+"dimension": "Pleasantness",
+"scale": "unpleasant - pleasant",
+"question": "Which pseudoword feels more pleasant?",
+"word_a": "zaliol",
+"word_b": "zaqioq",
+"predicted_word": "zaliol"
+},
+{
+"item": 40,
+"dimension": "Pleasantness",
+"scale": "unpleasant - pleasant",
+"question": "Which pseudoword feels more pleasant?",
+"word_a": "laqouq",
+"word_b": "lasous",
+"predicted_word": "lasous"
+},
+{
+"item": 41,
+"dimension": "Pleasantness",
+"scale": "unpleasant - pleasant",
+"question": "Which pseudoword feels more pleasant?",
+"word_a": "iequqe",
+"word_b": "iesuse",
+"predicted_word": "iesuse"
+},
+{
+"item": 42,
+"dimension": "Pleasantness",
+"scale": "unpleasant - pleasant",
+"question": "Which pseudoword feels more pleasant?",
+"word_a": "oquqno",
+"word_b": "osusno",
+"predicted_word": "osusno"
+},
+{
+"item": 43,
+"dimension": "Weight",
+"scale": "light - heavy",
+"question": "Which pseudoword feels heavier?",
+"word_a": "vivlir",
+"word_b": "vovlor",
+"predicted_word": "vovlor"
+},
+{
+"item": 44,
+"dimension": "Weight",
+"scale": "light - heavy",
+"question": "Which pseudoword feels heavier?",
+"word_a": "fimri",
+"word_b": "fomro",
+"predicted_word": "fomro"
+},
+{
+"item": 45,
+"dimension": "Weight",
+"scale": "light - heavy",
+"question": "Which pseudoword feels heavier?",
+"word_a": "tigib",
+"word_b": "togob",
+"predicted_word": "togob"
+},
+{
+"item": 46,
+"dimension": "Weight",
+"scale": "light - heavy",
+"question": "Which pseudoword feels heavier?",
+"word_a": "vigfag",
+"word_b": "viyfay",
+"predicted_word": "vigfag"
+},
+{
+"item": 47,
+"dimension": "Weight",
+"scale": "light - heavy",
+"question": "Which pseudoword feels heavier?",
+"word_a": "oagog",
+"word_b": "oayoy",
+"predicted_word": "oagog"
+},
+{
+"item": 48,
+"dimension": "Weight",
+"scale": "light - heavy",
+"question": "Which pseudoword feels heavier?",
+"word_a": "plorgo",
+"word_b": "ploryo",
+"predicted_word": "plorgo"
+},
+{
+"item": 49,
+"dimension": "Elevation",
+"scale": "low - high",
+"question": "Which pseudoword feels higher?",
+"word_a": "oagog",
+"word_b": "oayoy",
+"predicted_word": "oayoy"
+},
+{
+"item": 50,
+"dimension": "Elevation",
+"scale": "low - high",
+"question": "Which pseudoword feels higher?",
+"word_a": "uguge",
+"word_b": "uyuye",
+"predicted_word": "uyuye"
+},
+{
+"item": 51,
+"dimension": "Elevation",
+"scale": "low - high",
+"question": "Which pseudoword feels higher?",
+"word_a": "uegug",
+"word_b": "ueyuy",
+"predicted_word": "ueyuy"
+},
+{
+"item": 52,
+"dimension": "Elevation",
+"scale": "low - high",
+"question": "Which pseudoword feels higher?",
+"word_a": "diedo",
+"word_b": "yieyo",
+"predicted_word": "yieyo"
+},
+{
+"item": 53,
+"dimension": "Elevation",
+"scale": "low - high",
+"question": "Which pseudoword feels higher?",
+"word_a": "dudfie",
+"word_b": "yuyfie",
+"predicted_word": "yuyfie"
+},
+{
+"item": 54,
+"dimension": "Elevation",
+"scale": "low - high",
+"question": "Which pseudoword feels higher?",
+"word_a": "bitdod",
+"word_b": "bityoy",
+"predicted_word": "bityoy"
+}
+];
+
+const attentionChecks = [
+  { item: "AC1", dimension: "attention", question: "Which word feels bigger?", word_a: "mouse", word_b: "elephant", predicted_word: "elephant", is_attention: true },
+  { item: "AC2", dimension: "attention", question: "Which word feels faster?", word_a: "turtle", word_b: "rocket", predicted_word: "rocket", is_attention: true },
+  { item: "AC3", dimension: "attention", question: "Please select the word on the LEFT side.", word_a: "flurp", word_b: "flerp", predicted_word: "__LEFT__", is_attention: true },
+];
+
+// ===== STATE =====
+let allTrials = [];
+let currentTrial = 0;
+let results = [];
+let demographics = {};
+let startTime = null;
+let trialStartTime = null;
+const PROLIFIC_CODE = "C1SOUND_B";
+
+// ===== DATA COLLECTION ENDPOINTS =====
+// Google Sheets (works outside China)
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxHHuE4JDyvehMVo2I8azEtr9sG6ehCtjBv7jPpGEPYcI34eyZMjZG9bi8rIedMJ-wLLQ/exec";
+// Server酱 (works in China, pushes to WeChat) — replace with your SendKey
+const SERVERCHAN_SENDKEY = "YOUR_SENDKEY_HERE";
+
+// Extract Prolific URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+const PROLIFIC_PID = urlParams.get('PROLIFIC_PID') || "";
+const STUDY_ID = urlParams.get('STUDY_ID') || "";
+const SESSION_ID = urlParams.get('SESSION_ID') || "";
+
+// ===== FUNCTIONS =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startExperiment() {
+  // Collect demographics
+  demographics = {
+    age: document.getElementById('demo-age').value,
+    gender: document.querySelector('input[name="gender"]:checked')?.value || "",
+    native_language: document.getElementById('demo-lang').value,
+    other_languages: document.getElementById('demo-langs').value,
+    reading_disability: document.querySelector('input[name="reading"]:checked')?.value || "",
+  };
+
+  // Validate
+  if (!demographics.age || !demographics.gender || !demographics.native_language) {
+    alert("Please complete all required fields (age, gender, native language).");
+    return;
+  }
+
+  // Build trial list: shuffle experimental, insert attention checks at random positions
+  let exp = shuffle(experimentalTrials.map(t => ({...t, is_attention: false})));
+
+  // Insert attention checks at positions ~14, ~28, ~42 (evenly across 54 trials)
+  const positions = [
+    Math.floor(Math.random() * 4) + 12,  // around trial 14
+    Math.floor(Math.random() * 4) + 26,  // around trial 28
+    Math.floor(Math.random() * 4) + 40,  // around trial 42
+  ];
+  positions.sort((a, b) => b - a); // insert from back
+  for (let i = 0; i < attentionChecks.length; i++) {
+    exp.splice(positions[i], 0, attentionChecks[i]);
+  }
+
+  allTrials = exp;
+  currentTrial = 0;
+  startTime = Date.now();
+
+  showScreen('screen-instructions');
+}
+
+function showTrial() {
+  if (currentTrial >= allTrials.length) {
+    finishExperiment();
+    return;
+  }
+
+  const trial = allTrials[currentTrial];
+  const total = allTrials.length;
+  const pct = ((currentTrial) / total * 100).toFixed(0);
+
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('trial-progress').textContent = `Trial ${currentTrial + 1} of ${total}`;
+  document.getElementById('trial-question').textContent = trial.question;
+
+  // Randomize left/right position
+  const swapped = Math.random() < 0.5;
+  const leftWord = swapped ? trial.word_b : trial.word_a;
+  const rightWord = swapped ? trial.word_a : trial.word_b;
+
+  document.getElementById('word-left').textContent = leftWord;
+  document.getElementById('word-right').textContent = rightWord;
+
+  // Store position mapping for this trial
+  allTrials[currentTrial]._swapped = swapped;
+  allTrials[currentTrial]._leftWord = leftWord;
+  allTrials[currentTrial]._rightWord = rightWord;
+
+  // Show/hide back button
+  document.getElementById('back-btn').style.display = currentTrial > 0 ? 'inline-block' : 'none';
+
+  trialStartTime = Date.now();
+
+  // Disable buttons briefly to prevent accidental double-clicks
+  document.getElementById('word-left').disabled = true;
+  document.getElementById('word-right').disabled = true;
+  setTimeout(() => {
+    document.getElementById('word-left').disabled = false;
+    document.getElementById('word-right').disabled = false;
+  }, 200);
+}
+
+function goBack() {
+  if (currentTrial > 0) {
+    currentTrial--;
+    results.pop(); // Remove last response
+    showTrial();
+  }
+}
+
+function respond(side) {
+  const trial = allTrials[currentTrial];
+  const rt = Date.now() - trialStartTime;
+  const chosenWord = side === 'left' ? trial._leftWord : trial._rightWord;
+
+  // Determine if chose predicted word
+  let correct;
+  if (trial.predicted_word === "__LEFT__") {
+    correct = side === 'left';
+  } else {
+    correct = chosenWord === trial.predicted_word;
+  }
+
+  results.push({
+    trial_number: currentTrial + 1,
+    item: trial.item,
+    dimension: trial.dimension,
+    question: trial.question,
+    word_a: trial.word_a,
+    word_b: trial.word_b,
+    predicted_word: trial.predicted_word,
+    position_left: trial._leftWord,
+    position_right: trial._rightWord,
+    chosen_side: side,
+    chosen_word: chosenWord,
+    chose_predicted: correct,
+    is_attention: trial.is_attention || false,
+    rt_ms: rt,
+  });
+
+  currentTrial++;
+  showTrial();
+}
+
+async function finishExperiment() {
+  const totalTime = Math.round((Date.now() - startTime) / 1000);
+  document.getElementById('completion-code').textContent = PROLIFIC_CODE;
+  document.getElementById('progress-fill').style.width = '100%';
+  showScreen('screen-end');
+
+  // Log summary
+  const attChecks = results.filter(r => r.is_attention);
+  const attCorrect = attChecks.filter(r => r.chose_predicted).length;
+  console.log(`Completed in ${totalTime}s. Attention checks: ${attCorrect}/${attChecks.length}`);
+
+  const payload = {
+    study: "study1_visual_B",
+    
+    timestamp: new Date().toISOString(),
+    participant_id: PROLIFIC_PID,
+    study_id: STUDY_ID,
+    session_id: SESSION_ID,
+    demographics,
+    total_time_seconds: totalTime,
+    results,
+  };
+
+  let sent = false;
+
+  // 1) Try Server酱 (works in China, pushes to WeChat)
+  if (SERVERCHAN_SENDKEY && SERVERCHAN_SENDKEY !== "YOUR_SENDKEY_HERE") {
+    try {
+      const title = `Study1 Data - ${demographics.native_language || 'unknown'} - ${new Date().toLocaleString()}`;
+      const desp = JSON.stringify(payload, null, 2);
+      await fetch(`https://sctapi.ftqq.com/${SERVERCHAN_SENDKEY}.send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `title=${encodeURIComponent(title)}&desp=${encodeURIComponent(desp)}`,
+      });
+      console.log("Data submitted via Server酱 to WeChat");
+      sent = true;
+    } catch (err) {
+      console.warn("Server酱 submit failed:", err);
+    }
+  }
+
+  // 2) Try Google Sheets (works outside China)
+  if (GOOGLE_SHEET_URL && GOOGLE_SHEET_URL !== "YOUR_APPS_SCRIPT_URL_HERE") {
+    try {
+      await fetch(GOOGLE_SHEET_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      console.log("Data submitted to Google Sheets");
+      sent = true;
+    } catch (err) {
+      console.warn("Google Sheets submit failed:", err);
+    }
+  }
+
+  // 3) If both failed, show download button prominently
+  if (!sent) {
+    const dlBtn = document.getElementById('download-fallback');
+    if (dlBtn) dlBtn.style.display = 'block';
+  }
+}
+
+function downloadData() {
+  const data = {
+    study: "study1_visual_B",
+    
+    timestamp: new Date().toISOString(),
+    demographics,
+    total_time_seconds: Math.round((Date.now() - startTime) / 1000),
+    results,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `study1_visual_${Date.now()}.json`;
+  a.click();
+}
+</script>
+</body>
+</html>
