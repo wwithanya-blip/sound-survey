@@ -173,8 +173,8 @@ if (!urlParams.get('PROLIFIC_PID')) {
     <h1>Thank You!</h1>
     <p style="font-size:17px; margin:20px 0;">Your responses have been recorded.</p>
     <p style="margin:16px 0;">This study investigates sound symbolism — the idea that certain speech sounds are naturally associated with particular meanings or sensory qualities.</p>
-    <p style="margin:20px 0; font-weight:600;">Your Prolific completion code:</p>
-    <div class="completion-code" id="completion-code">XXXXXXXX</div>
+    <p style="margin:20px 0; font-weight:600;">Redirecting you back to Prolific...</p>
+    <p style="font-size:14px; color:#666;">If you are not redirected automatically, <a href="https://app.prolific.com/submissions/complete?cc=CNWZW068" id="prolific-redirect-link">click here</a>.</p>
     
     <div id="download-fallback" style="display:none; margin-top:16px; padding:16px; background:#fff3cd; border-radius:8px;">
       <p style="color:#856404; font-size:14px; margin-bottom:10px;">Data could not be sent automatically. Please download and send to the researcher.</p>
@@ -843,7 +843,6 @@ function respond(side) {
 
 async function finishExperiment() {
   const totalTime = Math.round((Date.now() - startTime) / 1000);
-  document.getElementById('completion-code').textContent = PROLIFIC_CODE;
   document.getElementById('progress-fill').style.width = '100%';
   showScreen('screen-end');
 
@@ -904,6 +903,11 @@ async function finishExperiment() {
     const dlBtn = document.getElementById('download-fallback');
     if (dlBtn) dlBtn.style.display = 'block';
   }
+
+  // 4) Auto-redirect to Prolific after 3 seconds
+  setTimeout(() => {
+    window.location.href = "https://app.prolific.com/submissions/complete?cc=CNWZW068";
+  }, 3000);
 }
 
 function downloadData() {
