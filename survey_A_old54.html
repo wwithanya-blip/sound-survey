@@ -62,8 +62,8 @@
 <body>
 <script>
 // Block access without Prolific parameters
-const urlParams = new URLSearchParams(window.location.search);
-if (!urlParams.get('PROLIFIC_PID')) {
+const _gateParams = new URLSearchParams(window.location.search);
+if (!_gateParams.get('PROLIFIC_PID')) {
   document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;"><div style="text-align:center;padding:40px;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);"><h2>Access Restricted</h2><p style="color:#666;margin-top:12px;">Please access this study through Prolific.</p></div></div>';
 }
 </script>
