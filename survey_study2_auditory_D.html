@@ -221,7 +221,13 @@ const AUDIO_MODE = "files";
 const AUDIO_BASE_URL = "./";
 const PROLIFIC_CODE = "CV20AQ13";
 const PROLIFIC_REDIRECT = "https://app.prolific.com/submissions/complete?cc=CV20AQ13";
-const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwLQj_PGWDkhYn9i0sPKujFEHWCd8GmIx91bDsdavRw33GmVYOzVA7-ZrLQU1b_G6k/exec";
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbzyZcYK7P3R11-JxszWgklYUqraISJONq341PB1vjjG7J_Ab5yqWogg8vx8IJNA_-1c4A/exec";
+
+// ===== PROLIFIC PARAMS =====
+const urlParams = new URLSearchParams(window.location.search);
+const PROLIFIC_PID = urlParams.get('PROLIFIC_PID') || "";
+const STUDY_ID = urlParams.get('STUDY_ID') || "";
+const SESSION_ID = urlParams.get('SESSION_ID') || "";
 
 // ===== STIMULUS DATA =====
 const experimentalTrials = [{"pair_key": "e_u", "question": "Which feels brighter?", "predicted_letter": "e", "wp_rank": 1, "word_a": "egmeg", "word_b": "ugmug", "source": "New Top3", "predicted_word": "egmeg"}, {"pair_key": "d_t", "question": "Which feels faster?", "predicted_letter": "t", "wp_rank": 1, "word_a": "dodemo", "word_b": "totemo", "source": "New Top3", "predicted_word": "totemo"}, {"pair_key": "i_u", "question": "Which feels faster?", "predicted_letter": "i", "wp_rank": 2, "word_a": "friv", "word_b": "fruv", "source": "New Top3", "predicted_word": "friv"}, {"pair_key": "d_s", "question": "Which feels heavier?", "predicted_letter": "d", "wp_rank": 1, "word_a": "dudue", "word_b": "susue", "source": "New Top3", "predicted_word": "dudue"}, {"pair_key": "f_g", "question": "Which feels heavier?", "predicted_letter": "g", "wp_rank": 1, "word_a": "fuanfu", "word_b": "guangu", "source": "Old (rank 2)", "predicted_word": "guangu"}, {"pair_key": "r_y", "question": "Which feels heavier?", "predicted_letter": "r", "wp_rank": 1, "word_a": "iperar", "word_b": "ipeyay", "source": "New Top3", "predicted_word": "iperar"}, {"pair_key": "b_c", "question": "Which feels more angular/sharp?", "predicted_letter": "c", "wp_rank": 2, "word_a": "buebe", "word_b": "cuece", "source": "New Top3", "predicted_word": "cuece"}, {"pair_key": "b_g", "question": "Which feels more angular/sharp?", "predicted_letter": "g", "wp_rank": 3, "word_a": "ebobi", "word_b": "egogi", "source": "New Top3", "predicted_word": "egogi"}, {"pair_key": "c_m", "question": "Which feels more angular/sharp?", "predicted_letter": "c", "wp_rank": 1, "word_a": "acuci", "word_b": "amumi", "source": "New Top3", "predicted_word": "acuci"}, {"pair_key": "c_w", "question": "Which feels more angular/sharp?", "predicted_letter": "c", "wp_rank": 2, "word_a": "cepac", "word_b": "wepaw", "source": "New Top3", "predicted_word": "cepac"}, {"pair_key": "d_x", "question": "Which feels more angular/sharp?", "predicted_letter": "x", "wp_rank": 3, "word_a": "bugdao", "word_b": "bugxao", "source": "New Top3", "predicted_word": "bugxao"}, {"pair_key": "q_w", "question": "Which feels more angular/sharp?", "predicted_letter": "q", "wp_rank": 1, "word_a": "doqaqi", "word_b": "dowawi", "source": "New Top3", "predicted_word": "doqaqi"}, {"pair_key": "i_e", "question": "Which feels more area-like?", "predicted_letter": "e", "wp_rank": 2, "word_a": "blebep", "word_b": "blibip", "source": "New Top3", "predicted_word": "blebep"}, {"pair_key": "d_l", "question": "Which feels more continuous?", "predicted_letter": "l", "wp_rank": 1, "word_a": "seadad", "word_b": "sealal", "source": "Old (rank 1)", "predicted_word": "sealal"}, {"pair_key": "l_z", "question": "Which feels more crossed?", "predicted_letter": "z", "wp_rank": 1, "word_a": "eilail", "word_b": "eizaiz", "source": "New Top3", "predicted_word": "eizaiz"}, {"pair_key": "g_j", "question": "Which feels more deft/nimble?", "predicted_letter": "j", "wp_rank": 1, "word_a": "megug", "word_b": "mejuj", "source": "Old (rank 2)", "predicted_word": "mejuj"}, {"pair_key": "k_v", "question": "Which feels more fluidly overflowing?", "predicted_letter": "v", "wp_rank": 1, "word_a": "atlak", "word_b": "atlav", "source": "New Top3", "predicted_word": "atlav"}, {"pair_key": "k_v", "question": "Which feels more fluidly overflowing?", "predicted_letter": "v", "wp_rank": 3, "word_a": "kamkue", "word_b": "vamvue", "source": "New Top3", "predicted_word": "vamvue"}, {"pair_key": "a_i", "question": "Which feels more focused?", "predicted_letter": "i", "wp_rank": 1, "word_a": "rasrad", "word_b": "risrid", "source": "Old (rank 2)", "predicted_word": "risrid"}, {"pair_key": "n_p", "question": "Which feels more forceful?", "predicted_letter": "p", "wp_rank": 3, "word_a": "nitfen", "word_b": "pitfep", "source": "New Top3", "predicted_word": "pitfep"}, {"pair_key": "b_z", "question": "Which feels more interlacing/crisscrossing?", "predicted_letter": "z", "wp_rank": 1, "word_a": "biesbu", "word_b": "zieszu", "source": "Old (rank 2)", "predicted_word": "zieszu"}, {"pair_key": "s_x", "question": "Which feels more like destroying integrity?", "predicted_letter": "x", "wp_rank": 1, "word_a": "daidas", "word_b": "daidax", "source": "Old (rank 2)", "predicted_word": "daidax"}, {"pair_key": "q_v", "question": "Which feels more like flowing outward?", "predicted_letter": "v", "wp_rank": 1, "word_a": "paqioq", "word_b": "paviov", "source": "Old (rank 2)", "predicted_word": "paviov"}, {"pair_key": "h_z", "question": "Which feels more like it has a sense of friction?", "predicted_letter": "z", "wp_rank": 1, "word_a": "aelihi", "word_b": "aelizi", "source": "New Top3", "predicted_word": "aelizi"}, {"pair_key": "h_r", "question": "Which feels more like it has a sense of turning/revolving?", "predicted_letter": "r", "wp_rank": 2, "word_a": "eheah", "word_b": "erear", "source": "New Top3", "predicted_word": "erear"}, {"pair_key": "c_v", "question": "Which feels more like overflowing?", "predicted_letter": "v", "wp_rank": 1, "word_a": "coici", "word_b": "voivi", "source": "Old (rank 2)", "predicted_word": "voivi"}, {"pair_key": "b_j", "question": "Which feels more like slicing thinly?", "predicted_letter": "j", "wp_rank": 1, "word_a": "mabib", "word_b": "majij", "source": "Old (rank 1)", "predicted_word": "majij"}, {"pair_key": "r_x", "question": "Which feels more like sudden cracking?", "predicted_letter": "x", "wp_rank": 1, "word_a": "rurseu", "word_b": "xuxseu", "source": "Old (rank 1)", "predicted_word": "xuxseu"}, {"pair_key": "f_x", "question": "Which feels more like violent cracking?", "predicted_letter": "x", "wp_rank": 3, "word_a": "fovzaf", "word_b": "xovzax", "source": "New Top3", "predicted_word": "xovzax"}, {"pair_key": "m_t", "question": "Which feels more outwardly pointing?", "predicted_letter": "t", "wp_rank": 3, "word_a": "ermum", "word_b": "ertut", "source": "New Top3", "predicted_word": "ertut"}, {"pair_key": "m_q", "question": "Which feels more piercing?", "predicted_letter": "q", "wp_rank": 1, "word_a": "mumroz", "word_b": "quqroz", "source": "Old (rank 2)", "predicted_word": "quqroz"}, {"pair_key": "h_q", "question": "Which feels more rigid/stiff?", "predicted_letter": "q", "wp_rank": 1, "word_a": "hauhie", "word_b": "qauqie", "source": "New Top3", "predicted_word": "qauqie"}, {"pair_key": "f_s", "question": "Which feels more stable/balanced?", "predicted_letter": "s", "wp_rank": 1, "word_a": "fafau", "word_b": "sasau", "source": "Old (rank 2)", "predicted_word": "sasau"}, {"pair_key": "j_t", "question": "Which feels more straight and pointing?", "predicted_letter": "t", "wp_rank": 1, "word_a": "pujuj", "word_b": "putut", "source": "Old (rank 1)", "predicted_word": "putut"}, {"pair_key": "g_l", "question": "Which feels more tense?", "predicted_letter": "g", "wp_rank": 1, "word_a": "aegig", "word_b": "aelil", "source": "New Top3", "predicted_word": "aegig"}, {"pair_key": "n_x", "question": "Which feels more violently cracking?", "predicted_letter": "x", "wp_rank": 1, "word_a": "tonono", "word_b": "toxoxo", "source": "Old (rank 2)", "predicted_word": "toxoxo"}];
@@ -493,14 +499,18 @@ function finishExperiment() {
   if (GOOGLE_SHEETS_URL) {
     const payload = {
       study: "study2_auditory_D",
+      participant_id: PROLIFIC_PID,
+      study_id: STUDY_ID,
+      session_id: SESSION_ID,
       timestamp: new Date().toISOString(),
       demographics,
       total_time_seconds: totalTime,
       results: results,
     };
     fetch(GOOGLE_SHEETS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     }).catch(() => {});
   }
@@ -509,6 +519,9 @@ function finishExperiment() {
 function downloadData() {
   const data = {
     study: "study2_auditory_D",
+      participant_id: PROLIFIC_PID,
+      study_id: STUDY_ID,
+      session_id: SESSION_ID,
     timestamp: new Date().toISOString(),
     demographics,
     total_time_seconds: Math.round((Date.now() - startTime) / 1000),
