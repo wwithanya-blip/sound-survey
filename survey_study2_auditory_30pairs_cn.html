@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>语音感知研究</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #333; }
+  .container { max-width: 720px; margin: 0 auto; padding: 20px; }
+  .screen { display: none; min-height: 80vh; }
+  .screen.active { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+  .info-box { background: #fff; border-radius: 12px; padding: 40px; box-shadow: 0 2px 12px rgba(0,0,0,.08); max-width: 640px; width: 100%; }
+  .info-box h1 { font-size: 22px; margin-bottom: 16px; color: #1a1a2e; }
+  .info-box h2 { font-size: 18px; margin: 20px 0 10px; color: #16213e; }
+  .info-box p, .info-box li { font-size: 15px; line-height: 1.7; margin-bottom: 8px; color: #444; }
+  .info-box ul { padding-left: 20px; }
+  .btn { display: inline-block; padding: 12px 32px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .btn-primary { background: #4361ee; color: #fff; }
+  .btn-primary:hover { background: #3a56d4; transform: translateY(-1px); }
+  .btn-secondary { background: #e8ecf1; color: #555; }
+  .btn-secondary:hover { background: #dde1e8; }
+  .btn-group { margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .form-group { margin-bottom: 20px; text-align: left; width: 100%; }
+  .form-group label { font-weight: 600; font-size: 14px; display: block; margin-bottom: 6px; }
+  .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+  .form-group .radio-group { display: flex; gap: 16px; flex-wrap: wrap; }
+  .form-group .radio-group label { font-weight: 400; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+  /* Trial */
+  .trial-container { text-align: center; width: 100%; }
+  .trial-question { font-size: 22px; font-weight: 600; color: #1a1a2e; margin-bottom: 20px; }
+  .trial-progress { font-size: 13px; color: #888; margin-bottom: 20px; }
+  .progress-bar { width: 100%; height: 4px; background: #e8ecf1; border-radius: 2px; margin-bottom: 20px; }
+  .progress-fill { height: 100%; background: #4361ee; border-radius: 2px; transition: width .3s; }
+
+  /* Audio player */
+  .audio-section { margin: 20px 0 30px; }
+  .audio-label { font-size: 14px; color: #888; margin-bottom: 8px; }
+  .audio-player { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 16px 0; }
+  .play-btn { width: 64px; height: 64px; border-radius: 50%; border: 2px solid #4361ee; background: #f0f4ff; color: #4361ee; font-size: 28px; cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; }
+  .play-btn:hover { background: #4361ee; color: #fff; }
+  .play-btn.playing { background: #4361ee; color: #fff; animation: pulse 1s infinite; }
+  .play-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+  .audio-word-label { font-size: 16px; font-weight: 600; color: #555; min-width: 80px; }
+
+  .word-pair { display: flex; gap: 40px; justify-content: center; align-items: center; margin-top: 10px; }
+  .word-btn { min-width: 180px; padding: 24px 20px; font-size: 20px; font-weight: 700; background: #fff; border: 2px solid #ddd; border-radius: 12px; cursor: pointer; transition: all .15s; color: #1a1a2e; }
+  .word-btn:hover:not(:disabled) { border-color: #4361ee; background: #f0f4ff; transform: scale(1.03); }
+  .word-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .or-divider { font-size: 16px; color: #aaa; font-weight: 600; }
+  .replay-btn { margin-top: 16px; padding: 8px 20px; border: 1px solid #ccc; border-radius: 6px; background: #fff; font-size: 14px; color: #666; cursor: pointer; }
+  .replay-btn:hover { background: #f5f5f5; }
+
+  .completion-code { font-size: 24px; font-weight: 700; background: #e8f5e9; padding: 16px 32px; border-radius: 8px; margin: 16px 0; letter-spacing: 1px; }
+  .audio-check-input { padding: 10px 16px; font-size: 18px; border: 1px solid #ccc; border-radius: 6px; width: 200px; text-align: center; }
+
+  @media (max-width: 600px) {
+    .word-pair { flex-direction: column; gap: 16px; }
+    .word-btn { min-width: 160px; font-size: 18px; padding: 18px; }
+    .or-divider { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- CONSENT -->
+<div class="screen active" id="screen-consent">
+  <div class="info-box">
+    <h1>语音感知研究</h1>
+    <h2>研究目的</h2>
+    <p>本研究探索人们如何将虚构词语的发音与特定感觉特征（如重量、尖锐度、速度等）联系起来。</p>
+    <h2>我需要做什么？</h2>
+    <p>您将<strong>聆听成对的虚构词语</strong>，并回答简单问题，如"哪个词听起来更重？"没有对错之分。</p>
+    <ul>
+      <li>时长：约5分钟</li>
+      <li>约33道题（30道实验题 + 注意力检测题）</li>
+      <li>需要音频播放 — 请确保您的设备可以播放声音</li>
+    </ul>
+    <h2>风险与保密性</h2>
+    <p>风险极小。您的回答完全匿名，不收集任何个人身份信息。</p>
+    <h2>自愿参与</h2>
+    <p>参与是自愿的。您可以随时关闭窗口退出。</p>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="showScreen('screen-demographics')">我同意 — 继续</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEMOGRAPHICS -->
+<div class="screen" id="screen-demographics">
+  <div class="info-box">
+    <h1>关于您</h1>
+    <div class="form-group">
+      <label>年龄</label>
+      <input type="number" id="demo-age" min="18" max="99" placeholder="例如：25">
+    </div>
+    <div class="form-group">
+      <label>性别</label>
+      <div class="radio-group">
+        <label><input type="radio" name="gender" value="male"> 男</label>
+        <label><input type="radio" name="gender" value="female"> 女</label>
+        <label><input type="radio" name="gender" value="nonbinary"> 非二元</label>
+        <label><input type="radio" name="gender" value="prefer_not"> 不愿透露</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>母语</label>
+      <input type="text" id="demo-lang" placeholder="例如：中文">
+    </div>
+    <div class="form-group">
+      <label>其他流利语言</label>
+      <input type="text" id="demo-langs" placeholder="例如：英语、日语（或无）">
+    </div>
+    <div class="form-group">
+      <label>您是否有听力障碍？</label>
+      <div class="radio-group">
+        <label><input type="radio" name="hearing" value="no"> 否</label>
+        <label><input type="radio" name="hearing" value="yes"> 是</label>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="goToAudioCheck()">继续</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUDIO CHECK -->
+<div class="screen" id="screen-audiocheck">
+  <div class="info-box" style="text-align:center;">
+    <h1>音频检测</h1>
+    <p style="margin:20px 0;">请确保设备音量已开启。点击播放按钮听一个词，然后输入您听到的内容。</p>
+    <div style="margin:30px 0;">
+      <button class="play-btn" id="audio-check-play" onclick="playAudioCheck()">&#9654;</button>
+    </div>
+    <div style="margin:20px 0;">
+      <input type="text" class="audio-check-input" id="audio-check-input" placeholder="输入您听到的词">
+    </div>
+    <p id="audio-check-msg" style="color:#c0392b; margin:10px 0; min-height:20px;"></p>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="checkAudio()">验证</button>
+    </div>
+  </div>
+</div>
+
+<!-- INSTRUCTIONS -->
+<div class="screen" id="screen-instructions">
+  <div class="info-box" style="text-align:center;">
+    <h1>实验说明</h1>
+    <p style="font-size:17px; margin:20px 0;">每道题您将听到两个虚构词语，并看到一个问题。</p>
+    <p style="font-size:17px; margin:20px 0;"><strong>选择最符合您直觉感受的那个词。</strong></p>
+    <p style="font-size:17px; margin:20px 0;">没有对错之分。请快速、自然地回答。</p>
+    <div style="margin:30px 0; padding:24px; background:#f8f9ff; border-radius:8px;">
+      <p style="font-size:16px; color:#888; margin-bottom:12px;">示例：</p>
+      <p style="font-size:18px; font-weight:600; margin-bottom:16px;">哪个词听起来更重？</p>
+      <p style="font-size:15px; color:#666; margin-bottom:12px;">您将依次听到词语1和词语2，然后做出选择。</p>
+      <div style="display:flex; gap:24px; justify-content:center;">
+        <span style="padding:14px 20px; background:#fff; border:2px solid #ddd; border-radius:8px; font-size:18px; font-weight:600;">词语1</span>
+        <span style="padding:14px 20px; background:#fff; border:2px solid #ddd; border-radius:8px; font-size:18px; font-weight:600;">词语2</span>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="showScreen('screen-trial'); showTrial();">开始</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRIAL -->
+<div class="screen" id="screen-trial">
+  <div class="trial-container">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="trial-progress" id="trial-progress"></div>
+    <div class="trial-question" id="trial-question"></div>
+
+    <div class="audio-section">
+      <div class="audio-player">
+        <div style="text-align:center;">
+          <div class="audio-word-label">词语1</div>
+          <button class="play-btn" id="play-a" onclick="playWord('a')">&#9654;</button>
+        </div>
+        <div style="font-size:20px; color:#ccc;">然后</div>
+        <div style="text-align:center;">
+          <div class="audio-word-label">词语2</div>
+          <button class="play-btn" id="play-b" onclick="playWord('b')">&#9654;</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="word-pair">
+      <button class="word-btn" id="word-left" onclick="respond('left')" disabled>词语1</button>
+      <span class="or-divider">或</span>
+      <button class="word-btn" id="word-right" onclick="respond('right')" disabled>词语2</button>
+    </div>
+    <button class="replay-btn" id="back-btn" onclick="goBack()" style="margin-top:20px; display:none;">&#8592; 返回上一题</button>
+  </div>
+</div>
+
+<!-- END -->
+<div class="screen" id="screen-end">
+  <div class="info-box" style="text-align:center;">
+    <h1>感谢您的参与！</h1>
+    <p style="font-size:17px; margin:20px 0;">您的回答已记录。</p>
+    <p style="margin:16px 0;">本研究探索语音象征——即某些语音天然地与特定含义或感官特征相关联的现象。您的回答帮助我们了解这些关联是否在不同语言中具有普遍性。</p>
+    <p style="margin:20px 0; font-weight:600;">您的完成码：</p>
+    <div class="completion-code" id="completion-code">XXXXXXXX</div>
+    <p style="margin:16px 0;">将在 <span id="redirect-countdown">5</span> 秒后跳转至Prolific...</p>
+    <div class="btn-group">
+      <a class="btn btn-primary" id="prolific-link" href="#">返回Prolific</a>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ===== CONFIG =====
+const AUDIO_MODE = "files";
+const AUDIO_BASE_URL = "./";
+const PROLIFIC_CODE = "CV20AQ13";
+const PROLIFIC_REDIRECT = "https://app.prolific.com/submissions/complete?cc=CV20AQ13";
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxbwoAt5uFmpr61UXdOH4vh3c3VDjUWHYj1h69nTxhWMOQTnD6KyHfOfgLSEw2wBchF/exec";
+
+// ===== PROLIFIC PARAMS =====
+const urlParams = new URLSearchParams(window.location.search);
+const PROLIFIC_PID = urlParams.get('PROLIFIC_PID') || "";
+const STUDY_ID = urlParams.get('STUDY_ID') || "";
+const SESSION_ID = urlParams.get('SESSION_ID') || "";
+
+// ===== STIMULUS DATA =====
+const experimentalTrials = [
+  {
+    "pair_key": "r_x",
+    "question": "哪个听起来更像突然碎裂？",
+    "predicted_letter": "x",
+    "word_a": "rurseu",
+    "word_b": "xuxseu",
+    "source": "Old (rank 1)",
+    "predicted_word": "xuxseu"
+  },
+  {
+    "pair_key": "q_v",
+    "question": "哪个听起来更像向外流动？",
+    "predicted_letter": "v",
+    "word_a": "qaqoun",
+    "word_b": "vavoun",
+    "source": "Old (rank 1)",
+    "predicted_word": "vavoun"
+  },
+  {
+    "pair_key": "c_m",
+    "question": "哪个听起来更尖锐？",
+    "predicted_letter": "c",
+    "word_a": "acuci",
+    "word_b": "amumi",
+    "source": "New Top3",
+    "predicted_word": "acuci"
+  },
+  {
+    "pair_key": "c_w",
+    "question": "哪个听起来更尖锐？",
+    "predicted_letter": "c",
+    "word_a": "acucie",
+    "word_b": "awuwie",
+    "source": "New Top3",
+    "predicted_word": "acucie"
+  },
+  {
+    "pair_key": "d_f",
+    "question": "哪个听起来更有漂浮感？",
+    "predicted_letter": "f",
+    "word_a": "dudeol",
+    "word_b": "fufeol",
+    "source": "Old (rank 1)",
+    "predicted_word": "fufeol"
+  },
+  {
+    "pair_key": "o_e",
+    "question": "哪个听起来更重？",
+    "predicted_letter": "o",
+    "word_a": "breb",
+    "word_b": "brob",
+    "source": "New Top3",
+    "predicted_word": "brob"
+  },
+  {
+    "pair_key": "m_q",
+    "question": "哪个听起来更有穿透力？",
+    "predicted_letter": "q",
+    "word_a": "mumroz",
+    "word_b": "quqroz",
+    "source": "Old (rank 2)",
+    "predicted_word": "quqroz"
+  },
+  {
+    "pair_key": "e_u",
+    "question": "哪个听起来更明亮？",
+    "predicted_letter": "e",
+    "word_a": "zerem",
+    "word_b": "zurum",
+    "source": "Old (rank 2)",
+    "predicted_word": "zerem"
+  },
+  {
+    "pair_key": "f_x",
+    "question": "哪个听起来更像猛烈碎裂？",
+    "predicted_letter": "x",
+    "word_a": "febfoi",
+    "word_b": "xebxoi",
+    "source": "New Top3",
+    "predicted_word": "xebxoi"
+  },
+  {
+    "pair_key": "h_t",
+    "question": "哪个听起来更集中/尖锐？",
+    "predicted_letter": "t",
+    "word_a": "popihe",
+    "word_b": "popite",
+    "source": "Old (rank 2)",
+    "predicted_word": "popite"
+  },
+  {
+    "pair_key": "a_o",
+    "question": "哪个听起来更有下沉感？",
+    "predicted_letter": "o",
+    "word_a": "malvaz",
+    "word_b": "molvoz",
+    "source": "Old (rank 1)",
+    "predicted_word": "molvoz"
+  },
+  {
+    "pair_key": "k_l",
+    "question": "哪个听起来更连续不断？",
+    "predicted_letter": "l",
+    "word_a": "bukik",
+    "word_b": "bulil",
+    "source": "Old (rank 2)",
+    "predicted_word": "bulil"
+  },
+  {
+    "pair_key": "j_t",
+    "question": "哪个听起来更笔直有指向性？",
+    "predicted_letter": "t",
+    "word_a": "pujuj",
+    "word_b": "putut",
+    "source": "Old (rank 1)",
+    "predicted_word": "putut"
+  },
+  {
+    "pair_key": "i_u",
+    "question": "哪个听起来更快？",
+    "predicted_letter": "i",
+    "word_a": "ifrit",
+    "word_b": "ufrut",
+    "source": "New Top3",
+    "predicted_word": "ifrit"
+  },
+  {
+    "pair_key": "i_e",
+    "question": "哪个听起来更有面积感？",
+    "predicted_letter": "e",
+    "word_a": "bleg",
+    "word_b": "blig",
+    "source": "New Top3",
+    "predicted_word": "bleg"
+  },
+  {
+    "pair_key": "w_x",
+    "question": "哪个听起来更像结构性破坏？",
+    "predicted_letter": "x",
+    "word_a": "fuowew",
+    "word_b": "fuoxex",
+    "source": "Old (rank 2)",
+    "predicted_word": "fuoxex"
+  },
+  {
+    "pair_key": "g_l",
+    "question": "哪个听起来更紧张？",
+    "predicted_letter": "g",
+    "word_a": "gutog",
+    "word_b": "lutol",
+    "source": "New Top3",
+    "predicted_word": "gutog"
+  },
+  {
+    "pair_key": "d_t",
+    "question": "哪个听起来更快？",
+    "predicted_letter": "t",
+    "word_a": "umdad",
+    "word_b": "umtat",
+    "source": "New Top3",
+    "predicted_word": "umtat"
+  },
+  {
+    "pair_key": "d_s",
+    "question": "哪个听起来更重？",
+    "predicted_letter": "d",
+    "word_a": "dirft",
+    "word_b": "sirft",
+    "source": "New Top3",
+    "predicted_word": "dirft"
+  },
+  {
+    "pair_key": "b_k",
+    "question": "哪个听起来更尖锐？",
+    "predicted_letter": "k",
+    "word_a": "abibvi",
+    "word_b": "akikvi",
+    "source": "New Top3",
+    "predicted_word": "akikvi"
+  },
+  {
+    "pair_key": "h_r",
+    "question": "哪个听起来更有旋转感？",
+    "predicted_letter": "r",
+    "word_a": "eheah",
+    "word_b": "erear",
+    "source": "New Top3",
+    "predicted_word": "erear"
+  },
+  {
+    "pair_key": "g_y",
+    "question": "哪个听起来更像光的弹跳？",
+    "predicted_letter": "y",
+    "word_a": "goseog",
+    "word_b": "yoseoy",
+    "source": "Old (rank 1)",
+    "predicted_word": "yoseoy"
+  },
+  {
+    "pair_key": "g_j",
+    "question": "哪个听起来更灵巧？",
+    "predicted_letter": "j",
+    "word_a": "megug",
+    "word_b": "mejuj",
+    "source": "Old (rank 2)",
+    "predicted_word": "mejuj"
+  },
+  {
+    "pair_key": "l_p",
+    "question": "哪个听起来更有力？",
+    "predicted_letter": "p",
+    "word_a": "tilila",
+    "word_b": "tipipa",
+    "source": "Old (rank 1)",
+    "predicted_word": "tipipa"
+  },
+  {
+    "pair_key": "b_z",
+    "question": "哪个听起来更有交错感？",
+    "predicted_letter": "z",
+    "word_a": "biesbu",
+    "word_b": "zieszu",
+    "source": "Old (rank 2)",
+    "predicted_word": "zieszu"
+  },
+  {
+    "pair_key": "r_y",
+    "question": "哪个听起来更重？",
+    "predicted_letter": "r",
+    "word_a": "iperar",
+    "word_b": "ipeyay",
+    "source": "New Top3",
+    "predicted_word": "iperar"
+  },
+  {
+    "pair_key": "a_i",
+    "question": "哪个听起来更集中？",
+    "predicted_letter": "i",
+    "word_a": "flacav",
+    "word_b": "fliciv",
+    "source": "Old (rank 1)",
+    "predicted_word": "fliciv"
+  },
+  {
+    "pair_key": "n_p",
+    "question": "哪个听起来更有力？",
+    "predicted_letter": "p",
+    "word_a": "nanfe",
+    "word_b": "papfe",
+    "source": "New Top3",
+    "predicted_word": "papfe"
+  },
+  {
+    "pair_key": "n_v",
+    "question": "哪个听起来更快？",
+    "predicted_letter": "v",
+    "word_a": "nonom",
+    "word_b": "vovom",
+    "source": "Old (rank 2)",
+    "predicted_word": "vovom"
+  },
+  {
+    "pair_key": "s_z",
+    "question": "哪个听起来更有交叉运动感？",
+    "predicted_letter": "z",
+    "word_a": "pisfus",
+    "word_b": "pizfuz",
+    "source": "Old (rank 1)",
+    "predicted_word": "pizfuz"
+  }
+];
+
+const attentionChecks = [
+  { pair_key: "AC1", dimension: "attention", question: "请选择左边的词语。", word_a: "nib", word_b: "tof", predicted_word: "__LEFT__", is_attention: true },
+  { pair_key: "AC2", dimension: "attention", question: "请选择右边的词语。", word_a: "pem", word_b: "guk", predicted_word: "__RIGHT__", is_attention: true },
+  { pair_key: "AC3", dimension: "attention", question: "请选择词语1（你先听到的那个词）。", word_a: "flurp", word_b: "flerp", predicted_word: "__FIRST__", is_attention: true },
+];
+
+// ===== AUDIO ENGINE =====
+let ttsVoice = null;
+function initTTS() {
+  const synth = window.speechSynthesis;
+  return new Promise(resolve => {
+    function setVoice() {
+      const voices = synth.getVoices();
+      ttsVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) ||
+                 voices.find(v => v.lang.startsWith('en')) ||
+                 voices[0];
+      resolve();
+    }
+    if (synth.getVoices().length) setVoice();
+    else synth.onvoiceschanged = setVoice;
+    setTimeout(resolve, 2000);
+  });
+}
+
+function speak(word) {
+  return new Promise(resolve => {
+    if (AUDIO_MODE === "files") {
+      const audio = new Audio(AUDIO_BASE_URL + word + ".mp3");
+      audio.onended = resolve;
+      audio.onerror = () => { speakTTS(word).then(resolve); };
+      audio.play().catch(() => { speakTTS(word).then(resolve); });
+    } else {
+      speakTTS(word).then(resolve);
+    }
+  });
+}
+
+function speakTTS(word) {
+  return new Promise(resolve => {
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(word);
+    utter.rate = 0.85;
+    utter.pitch = 1;
+    if (ttsVoice) utter.voice = ttsVoice;
+    utter.onend = resolve;
+    utter.onerror = resolve;
+    synth.speak(utter);
+  });
+}
+
+// ===== STATE =====
+let allTrials = [];
+let currentTrial = 0;
+let results = [];
+let demographics = {};
+let startTime = null;
+let trialStartTime = null;
+let audioPlayed = false;
+let playedA = false;
+let playedB = false;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function goToAudioCheck() {
+  demographics = {
+    age: document.getElementById('demo-age').value,
+    gender: document.querySelector('input[name="gender"]:checked')?.value || "",
+    native_language: document.getElementById('demo-lang').value,
+    other_languages: document.getElementById('demo-langs').value,
+    hearing_impairment: document.querySelector('input[name="hearing"]:checked')?.value || "",
+  };
+  if (!demographics.age || !demographics.gender || !demographics.native_language) {
+    alert("请填写所有必填项（年龄、性别、母语）。");
+    return;
+  }
+  initTTS().then(() => showScreen('screen-audiocheck'));
+}
+
+const audioCheckWord = "hello";
+function playAudioCheck() {
+  const btn = document.getElementById('audio-check-play');
+  btn.classList.add('playing');
+  speak(audioCheckWord).then(() => btn.classList.remove('playing'));
+}
+
+function checkAudio() {
+  const input = document.getElementById('audio-check-input').value.trim().toLowerCase();
+  if (input === audioCheckWord) {
+    startExperiment();
+  } else {
+    document.getElementById('audio-check-msg').textContent = "输入不正确，请重试。请确保音频正常工作。";
+  }
+}
+
+function startExperiment() {
+  let exp = shuffle(experimentalTrials.map(t => ({...t, is_attention: false})));
+  // Insert attention checks evenly
+  const interval = Math.floor(exp.length / (attentionChecks.length + 1));
+  for (let i = attentionChecks.length - 1; i >= 0; i--) {
+    const pos = Math.min(interval * (i + 1) + Math.floor(Math.random() * 6) - 3, exp.length);
+    exp.splice(Math.max(pos, 1), 0, attentionChecks[i]);
+  }
+  allTrials = exp;
+  currentTrial = 0;
+  startTime = Date.now();
+  showScreen('screen-instructions');
+}
+
+async function showTrial() {
+  if (currentTrial >= allTrials.length) {
+    finishExperiment();
+    return;
+  }
+
+  const trial = allTrials[currentTrial];
+  const total = allTrials.length;
+  const pct = (currentTrial / total * 100).toFixed(0);
+
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('trial-progress').textContent = `第 ${currentTrial + 1} 题 / 共 ${total} 题`;
+  document.getElementById('trial-question').textContent = trial.question;
+
+  const swapped = Math.random() < 0.5;
+  const firstWord = swapped ? trial.word_b : trial.word_a;
+  const secondWord = swapped ? trial.word_a : trial.word_b;
+
+  trial._swapped = swapped;
+  trial._firstWord = firstWord;
+  trial._secondWord = secondWord;
+
+  document.getElementById('word-left').disabled = true;
+  document.getElementById('word-right').disabled = true;
+  document.getElementById('word-left').textContent = "词语1";
+  document.getElementById('word-right').textContent = "词语2";
+  audioPlayed = false;
+  playedA = false;
+  playedB = false;
+
+  // Enable play buttons, wait for participant to play both
+  document.getElementById('play-a').disabled = false;
+  document.getElementById('play-b').disabled = false;
+  trialStartTime = Date.now();
+  // Show/hide back button
+  const backBtn = document.getElementById('back-btn');
+  if (backBtn) backBtn.style.display = currentTrial > 0 ? 'inline-block' : 'none';
+}
+
+function checkBothPlayed() {
+  if (playedA && playedB) {
+    audioPlayed = true;
+    document.getElementById('word-left').disabled = false;
+    document.getElementById('word-right').disabled = false;
+  }
+}
+
+async function playBothSequence(first, second) {
+  const btnA = document.getElementById('play-a');
+  const btnB = document.getElementById('play-b');
+
+  btnA.classList.add('playing');
+  await speak(first);
+  btnA.classList.remove('playing');
+
+  await new Promise(r => setTimeout(r, 500));
+
+  btnB.classList.add('playing');
+  await speak(second);
+  btnB.classList.remove('playing');
+}
+
+async function playWord(which) {
+  const trial = allTrials[currentTrial];
+  if (!trial) return;
+  const word = which === 'a' ? trial._firstWord : trial._secondWord;
+  const btn = document.getElementById(which === 'a' ? 'play-a' : 'play-b');
+  btn.disabled = true;
+  btn.classList.add('playing');
+  await speak(word);
+  btn.classList.remove('playing');
+  btn.disabled = false;
+  if (which === 'a') playedA = true;
+  if (which === 'b') playedB = true;
+  checkBothPlayed();
+}
+
+async function playBoth() {
+  const trial = allTrials[currentTrial];
+  if (!trial) return;
+  document.getElementById('word-left').disabled = true;
+  document.getElementById('word-right').disabled = true;
+  document.getElementById('play-a').disabled = true;
+  document.getElementById('play-b').disabled = true;
+  await playBothSequence(trial._firstWord, trial._secondWord);
+  document.getElementById('play-a').disabled = false;
+  document.getElementById('play-b').disabled = false;
+  playedA = true;
+  playedB = true;
+  checkBothPlayed();
+}
+
+
+function goBack() {
+  if (currentTrial <= 0) return;
+  // Remove last result
+  results.pop();
+  currentTrial--;
+  showTrial();
+}
+
+function respond(side) {
+  if (!audioPlayed) return;
+  const trial = allTrials[currentTrial];
+  const rt = Date.now() - trialStartTime;
+  const chosenWord = side === 'left' ? trial._firstWord : trial._secondWord;
+
+  let correct;
+  if (trial.predicted_word === "__FIRST__" || trial.predicted_word === "__LEFT__") {
+    correct = side === 'left';
+  } else if (trial.predicted_word === "__RIGHT__") {
+    correct = side === 'right';
+  } else {
+    correct = chosenWord === trial.predicted_word;
+  }
+
+  results.push({
+    trial_number: currentTrial + 1,
+    pair_key: trial.pair_key,
+    question: trial.question,
+    word_a: trial.word_a,
+    word_b: trial.word_b,
+    predicted_word: trial.predicted_word,
+    predicted_letter: trial.predicted_letter || "",
+    source: trial.source || "",
+    first_played: trial._firstWord,
+    second_played: trial._secondWord,
+    chosen_side: side,
+    chosen_word: chosenWord,
+    chose_predicted: correct,
+    is_attention: trial.is_attention || false,
+    rt_ms: rt,
+  });
+
+  currentTrial++;
+  showTrial();
+}
+
+function finishExperiment() {
+  const totalTime = Math.round((Date.now() - startTime) / 1000);
+  document.getElementById('completion-code').textContent = PROLIFIC_CODE;
+  document.getElementById('progress-fill').style.width = '100%';
+  if (typeof PROLIFIC_REDIRECT !== 'undefined' && PROLIFIC_REDIRECT) {
+    document.getElementById('prolific-link').href = PROLIFIC_REDIRECT;
+    let countdown = 5;
+    const timer = setInterval(() => {
+      countdown--;
+      const el = document.getElementById('redirect-countdown');
+      if (el) el.textContent = countdown;
+      if (countdown <= 0) { clearInterval(timer); window.location.href = PROLIFIC_REDIRECT; }
+    }, 1000);
+  }
+  showScreen('screen-end');
+
+  // Send data to Google Sheets if configured
+  if (GOOGLE_SHEETS_URL) {
+    const payload = {
+      study: "study2_auditory_30_cn",
+      timestamp: new Date().toISOString(),
+      participant_id: PROLIFIC_PID,
+      study_id: STUDY_ID,
+      session_id: SESSION_ID,
+      demographics,
+      total_time_seconds: totalTime,
+      results: results,
+    };
+    // 通过隐藏表单提交（绕过 fetch 的 302 重定向问题）
+    var iframe = document.createElement('iframe');
+    iframe.name = 'gsheet' + Date.now();
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = GOOGLE_SHEETS_URL;
+    form.target = iframe.name;
+    var input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'data';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+    console.log('Data submitted to Google Sheets via form (CN)');
+  }
+}
+
+function downloadData() {
+  const data = {
+    study: "study2_auditory_30_cn",
+    timestamp: new Date().toISOString(),
+    demographics,
+    total_time_seconds: Math.round((Date.now() - startTime) / 1000),
+    results,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `study2_auditory_30_cn_${Date.now()}.json`;
+  a.click();
+}
+</script>
+</body>
+</html>
