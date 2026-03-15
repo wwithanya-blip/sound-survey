@@ -136,7 +136,7 @@
       <button class="play-btn" id="audio-check-play" onclick="playAudioCheck()">&#9654;</button>
     </div>
     <div style="margin:20px 0;">
-      <input type="text" class="audio-check-input" id="audio-check-input" placeholder="输入您听到的词">
+      <input type="text" class="audio-check-input" id="audio-check-input" placeholder="输入您听到的词（中文）">
     </div>
     <p id="audio-check-msg" style="color:#c0392b; margin:10px 0; min-height:20px;"></p>
     <div class="btn-group">
@@ -594,15 +594,25 @@ function goToAudioCheck() {
   initTTS().then(() => showScreen('screen-audiocheck'));
 }
 
-const audioCheckWord = "hello";
+const audioCheckWord = "你好";
+const audioCheckFile = new Audio(AUDIO_BASE_URL + "nihao.mp3");
+
 function playAudioCheck() {
   const btn = document.getElementById('audio-check-play');
   btn.classList.add('playing');
-  speak(audioCheckWord).then(() => btn.classList.remove('playing'));
+  audioCheckFile.currentTime = 0;
+  audioCheckFile.play()
+    .then(() => {
+      audioCheckFile.onended = () => btn.classList.remove('playing');
+    })
+    .catch(() => {
+      btn.classList.remove('playing');
+      document.getElementById('audio-check-msg').textContent = "音频播放失败，请检查网络连接。";
+    });
 }
 
 function checkAudio() {
-  const input = document.getElementById('audio-check-input').value.trim().toLowerCase();
+  const input = document.getElementById('audio-check-input').value.trim();
   if (input === audioCheckWord) {
     startExperiment();
   } else {
